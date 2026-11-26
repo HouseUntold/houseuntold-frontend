@@ -1,0 +1,6 @@
+{
+  "name": "House Untold — Live Events & Editorial Ticketing",
+  "description": "Premium editorial-style ticketing platform with spatial motion, dynamic seat selection, atomic UPI payments, F&B wallet POS, gate scanner, and operations console.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
