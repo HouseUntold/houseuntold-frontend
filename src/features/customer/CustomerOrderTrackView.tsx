@@ -112,7 +112,7 @@ export const CustomerOrderTrackView: React.FC = () => {
             htmlFor="ticket-id"
             className="block text-[11px] font-bold text-[var(--color-muted)] uppercase tracking-wider"
           >
-            Ticket ID, mobile number, or UTR
+            Mobile number or Transaction ID (UTR No.)
           </label>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
@@ -121,7 +121,7 @@ export const CustomerOrderTrackView: React.FC = () => {
               <input
                 id="ticket-id"
                 type="text"
-                placeholder="Enter ticket UUID, 10-digit mobile, or 12-digit UTR"
+                placeholder="10-digit mobile, or 12-digit UTR"
                 value={ticketInput}
                 onChange={(e) => setTicketInput(e.target.value)}
                 aria-describedby="ticket-id-help"
@@ -151,7 +151,7 @@ export const CustomerOrderTrackView: React.FC = () => {
           </div>
 
           <p id="ticket-id-help" className="text-[11px] text-[var(--color-muted)]">
-            Search by ticket UUID, registered mobile number, or payment UTR.
+            Search by registered mobile number, or payment transaction ID.
           </p>
         </form>
       </div>

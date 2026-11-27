@@ -40,7 +40,7 @@ const topics = [
   {
     icon: ShieldCheck,
     title: "Safety and ID",
-    body: "Ask about 21+ government photo ID, venue rules, and getting to the venue.",
+    body: "Ask about government photo ID, venue rules, and getting to the venue.",
   },
 ];
 

@@ -41,7 +41,7 @@ export const Topbar: React.FC = () => {
             <img className="w-full h-full object-cover" src="/assets/images/Logo.jpeg" alt="House Untold" />
           </div>
           <span className="font-bold text-lg text-[var(--color-ink)] tracking-tight group-hover:text-[var(--color-ink)]/90 transition-colors">
-            Housen Untold
+            House Untold
           </span>
         </Link>
       </div>
