@@ -219,7 +219,6 @@ export const AdminLeads: React.FC = () => {
                       <td className="px-4 py-3.5 align-top">
                         <div className="space-y-0.5">
                           <div className="text-xs font-medium text-[var(--color-ink)] line-clamp-1">{lead.event_title || "—"}</div>
-                          <div className="text-[11px] text-[var(--color-muted)] line-clamp-1">{lead.category_name ? formatLabel(lead.category_name) : "—"}</div>
                           {lead.seat_section && (
                             <div className="text-[11px] text-[var(--color-brand)] font-semibold">Section {lead.seat_section}{lead.seat_table_size ? ` · ${lead.seat_table_size}-seater` : ""}</div>
                           )}

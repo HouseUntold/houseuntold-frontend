@@ -1049,8 +1049,7 @@ export const AdminDashboard: React.FC = () => {
                                 {ticket.primary_guest_name || "Guest"}
                               </p>
                               <p className="text-xs text-[var(--color-muted)] mt-0.5 truncate">
-                                {ticket.event_title} &bull;{" "}
-                                {ticket.category_name}
+                                {ticket.event_title}
                               </p>
                               <p className="text-[11px] text-[var(--color-muted)] mt-1.5">
                                 {ticketCategoryBreakdown(ticket) ||
@@ -1063,7 +1062,7 @@ export const AdminDashboard: React.FC = () => {
                             <div className="pt-2.5 border-t border-[var(--color-hairline)]/60 flex items-center justify-between gap-3">
                               <span className="text-[11px] font-semibold text-[var(--color-ink)] num">
                                 {ticket.attendee_count}{" "}
-                                {pluralize(ticket.attendee_count, "ticket")}
+                                {pluralize(ticket.attendee_count, "Guest")}
                               </span>
                               <span className="font-mono text-xs font-bold text-[var(--color-brand)]">
                                 {ticket.bar_code || "No barcode"}
