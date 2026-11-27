@@ -146,7 +146,7 @@ const makeDraft = (event?: Event, existingSeats?: SeatDraft[]): Draft => {
     venueName: event?.venueName || event?.venue?.name || "Venue to be announced",
     locationArea: event?.locationArea || "Pune",
     transitInfo: event?.transitInfo || "",
-    advisoryNotice: event?.advisoryNotice || "A valid government photo ID is required for entry to 21+ areas.",
+    advisoryNotice: event?.advisoryNotice || "A valid government photo ID is required for entry.",
     description: event?.description || "",
     startsAt: toLocalInput(event?.startsAt),
     endsAt: toLocalInput(event?.endsAt),

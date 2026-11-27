@@ -8,6 +8,7 @@ import type {
   FirebasePhoneAuthInput,
   GoogleAuthInput,
 } from "../../../lib/api/types";
+import { useAuthStore } from "../../../stores/auth.store";
 
 export const AUTH_QUERY_KEY = ["auth", "me"] as const;
 
@@ -77,10 +78,10 @@ export function useAuth() {
 
   const logoutMutation = useMutation({
     mutationFn: () => api.logout(),
-    onSuccess: () => {
+    onSettled: () => {
       setAccessExpiresAt(null);
-      queryClient.setQueryData(AUTH_QUERY_KEY, null);
-      void queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+      useAuthStore.getState().logout();
+      queryClient.clear();
     },
   });
 

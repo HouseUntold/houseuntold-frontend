@@ -174,7 +174,7 @@ export const GatekeeperConsole: React.FC = () => {
   const scannedPass = verifiedTicket ?? scanResult;
   const primaryGuest = getGuestName(scannedPass);
   const partySize =
-    verifiedTicket?.entry_count || scanResult?.entry_count || verifiedTicket?.attendee_count || 1;
+    verifiedTicket?.attendee_count || verifiedTicket?.entry_count || scanResult?.entry_count || 1;
   const ticketIdShort = (verifiedTicket?.id || scanResult?.ticket_id || "")
     .slice(0, 8)
     .toUpperCase();

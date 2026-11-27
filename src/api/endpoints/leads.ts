@@ -24,17 +24,29 @@ export interface CheckoutLead {
   updated_at: string;
 }
 
+export interface CheckoutLeadsPage {
+  leads: CheckoutLead[];
+  count: number;
+  next_cursor?: string;
+  has_more: boolean;
+}
+
 export const leadsApi = {
-  list: async (params: { q?: string; eventId?: string; includeCompleted?: boolean; limit?: number; offset?: number } = {}) => {
+  list: async (params: { q?: string; eventId?: string; includeCompleted?: boolean; limit?: number; cursor?: string } = {}) => {
     const res = await api.get("/admin/leads", {
       params: {
         q: params.q || undefined,
         event_id: params.eventId || undefined,
         include_completed: params.includeCompleted ? "true" : "false",
-        limit: params.limit ?? 50,
-        offset: params.offset ?? 0,
+        limit: params.limit ?? 10,
+        cursor: params.cursor || undefined,
       },
     });
-    return (res.data.leads || []) as CheckoutLead[];
+    return {
+      leads: (res.data.leads || []) as CheckoutLead[],
+      count: Number(res.data.count || 0),
+      next_cursor: res.data.next_cursor || "",
+      has_more: Boolean(res.data.has_more),
+    } as CheckoutLeadsPage;
   },
 };

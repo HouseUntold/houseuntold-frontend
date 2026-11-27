@@ -41,7 +41,7 @@ export const CustomerEventDetailView: React.FC = () => {
   // Selection states
   const [selectedTierType, setSelectedTierType] = useState<
     "TABLE" | "COUPLE" | "STAG" | "GROUP"
-  >("TABLE");
+  >("GROUP");
   const [tableSize, setTableSize] = useState<5 | 8 | 10 | 15>(5);
   const [tableCategory, setTableCategory] = useState<"A" | "B" | "C">("A");
   const [isLayoutOpen, setLayoutOpen] = useState(false);
@@ -185,6 +185,10 @@ export const CustomerEventDetailView: React.FC = () => {
   const stag = stagTier(gender);
   const tierAvailability = (t?: TicketTier) =>
     !t ? "Unavailable" : t.available === 0 ? "Sold out" : `${t.available} left`;
+  const tableAvailability = (size: number, section: string) => {
+    const n = tableAvailable(size, section);
+    return n <= 0 ? "Sold out" : `${n} left`;
+  };
 
   const stepper = (
     label: string,
@@ -582,7 +586,7 @@ export const CustomerEventDetailView: React.FC = () => {
                           : "text-[var(--color-muted)]"
                       }`}
                     >
-                      {s.num}. <span className="sm:hidden">{s.short}</span>
+                      <span className="sm:hidden">{s.short}</span>
                       <span className="hidden sm:inline">{s.label}</span>
                     </span>
                   </div>
@@ -632,7 +636,7 @@ export const CustomerEventDetailView: React.FC = () => {
                         <span
                           aria-hidden="true"
                           className={`absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-lg bg-[var(--color-brand)] shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
-                            selectedTierType === "GROUP"
+                            selectedTierType === "TABLE"
                               ? "translate-x-full"
                               : "translate-x-0"
                           }`}
@@ -640,8 +644,8 @@ export const CustomerEventDetailView: React.FC = () => {
 
                         {(
                           [
-                            { id: "TABLE", label: "Table" },
                             { id: "GROUP", label: "Group" },
+                            { id: "TABLE", label: "Table" },
                           ] as const
                         ).map((tab) => (
                           <button
@@ -667,121 +671,14 @@ export const CustomerEventDetailView: React.FC = () => {
                         <div className="overflow-hidden rounded-xl">
                           <div
                             className={`flex w-[200%] items-start transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
-                              selectedTierType === "GROUP"
+                              selectedTierType === "TABLE"
                                 ? "-translate-x-1/2"
                                 : "translate-x-0"
                             }`}
                           >
-                            {/* TABLE Options */}
-                            <div
-                              className={`w-1/2 shrink-0 pr-0.5 transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                                selectedTierType === "TABLE"
-                                  ? "max-h-[500px] opacity-100"
-                                  : "max-h-0 opacity-0 overflow-hidden pointer-events-none"
-                              }`}
-                            >
-                              <div className="p-4 rounded-xl bg-[var(--color-canvas)]/70 border border-[var(--color-hairline)]/60 space-y-4 text-xs">
-                                <div className="space-y-2">
-                                  <span className="font-bold text-[var(--color-muted)] uppercase tracking-wider text-[10px] block">
-                                    Table Capacity
-                                  </span>
-                                  <div className="grid grid-cols-4 gap-2">
-                                    {([5, 8, 10, 15] as const).map((size) => (
-                                      <button
-                                        key={size}
-                                        type="button"
-                                        onClick={() => setTableSize(size)}
-                                        disabled={!((["A","B","C"] as const).some((c) => tableAvailable(size, c) > 0))}
-                                        className={`py-2 rounded-lg border text-center font-bold text-xs transition-[background-color,border-color,transform] active:scale-[0.97] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${
-                                          tableSize === size
-                                            ? "bg-[var(--color-brand)] text-[var(--color-brand-text)] border-[var(--color-brand)]"
-                                            : "bg-[var(--color-surface)] border-[var(--color-hairline)] text-[var(--color-ink)] hover:border-[var(--color-brand)]/50"
-                                        }`}
-                                      >
-                                        {size} Guests
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <span className="font-bold text-[var(--color-muted)] uppercase tracking-wider text-[10px] block">
-                                    Zone Pricing (Table of {tableSize})
-                                  </span>
-                                  <div className="grid grid-cols-3 gap-2">
-                                    {(["A", "B", "C"] as const).map((cat) => {
-                                      const tier = groupTier(tableSize, cat);
-                                      return (
-                                        <button
-                                          key={cat}
-                                          type="button"
-                                          onClick={() => setTableCategory(cat)}
-                                          disabled={tier?.available === 0}
-                                          className={`p-2.5 rounded-lg border text-left transition-[background-color,border-color,transform] active:scale-[0.97] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${
-                                            tableCategory === cat
-                                              ? "bg-[var(--color-brand)] text-[var(--color-brand-text)] border-[var(--color-brand)]"
-                                              : "bg-[var(--color-surface)] border-[var(--color-hairline)] text-[var(--color-ink)] hover:border-[var(--color-brand)]/50"
-                                          }`}
-                                        >
-                                          <div
-                                            className={`text-[10px] font-semibold uppercase ${
-                                              tableCategory === cat
-                                                ? "text-[var(--color-brand-text)]/80"
-                                                : "text-[var(--color-muted)]"
-                                            }`}
-                                          >
-                                            Zone {cat}
-                                          </div>
-                                          <div className="font-bold text-xs num mt-0.5">
-                                            {tier
-                                              ? formatCurrencyINR(
-                                                payableTierPrice(tier),
-                                              )
-                                              : "—"}
-                                          </div>
-                                          <div
-                                            className={`text-[9px] font-semibold mt-0.5 ${
-                                              tableCategory === cat
-                                                ? "text-[var(--color-brand-text)]/80"
-                                                : tier?.available === 0
-                                                ? "text-[var(--color-danger)]"
-                                                : "text-[var(--color-muted)]"
-                                            }`}
-                                          >
-                                            {tierAvailability(tier)}
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-
-                                  {(!groupTier(tableSize, tableCategory) || tableAvailable(tableSize, tableCategory) <= 0) && (
-                                    <p className="text-[11px] font-semibold text-[var(--color-danger)]">
-                                      {tableAvailable(tableSize, tableCategory) <= 0 ? `Sold out for ${tableSize} guests in zone ${tableCategory}. Pick another size or zone.` : `No tables for ${tableSize} guests in zone ${tableCategory}. Try another size or zone.`}
-                                    </p>
-                                  )}
-
-                                  <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-hairline)]/40 text-[11px] text-[var(--color-muted)]">
-                                    <Wallet className="w-3.5 h-3.5 text-[var(--color-brand)] shrink-0" />
-                                    <span>
-                                      The full table amount becomes bar credit.
-                                    </span>
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => setLayoutOpen(true)}
-                                    className="min-h-[44px] w-full py-2.5 rounded-lg border border-[var(--color-brand)]/40 text-[var(--color-brand)] text-sm font-semibold hover:bg-[var(--color-brand)]/10 active:scale-[0.98] transition-[background-color,transform] duration-150 cursor-pointer"
-                                  >
-                                    Show layout
-                                  </button>
-                                </div>
-                            </div>
-
                             {/* GROUP Options */}
                             <div
-                              className={`w-1/2 shrink-0 pl-0.5 transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                              className={`w-1/2 shrink-0 pr-0.5 transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                                 selectedTierType === "GROUP"
                                   ? "max-h-[500px] opacity-100"
                                   : "max-h-0 opacity-0 overflow-hidden pointer-events-none"
@@ -790,41 +687,58 @@ export const CustomerEventDetailView: React.FC = () => {
                               <div className="p-4 rounded-xl bg-[var(--color-canvas)]/70 border border-[var(--color-hairline)]/60 space-y-3 text-xs">
                                 {stepper("Couples", couples, setCouples)}
                                 {stepper("Single - Men", stagMale, setStagMale)}
-                                {stepper(
-                                  "Single - Women",
-                                  stagFemale,
-                                  setStagFemale,
-                                )}
-
+                                {stepper("Single - Women", stagFemale, setStagFemale)}
                                 <div className="pt-3 border-t border-[var(--color-hairline)]/40 space-y-1.5 text-[var(--color-muted)]">
-                                  {couples > 0 && (
-                                    <div className="flex justify-between">
-                                      <span>{couples} couple{couples === 1 ? "" : "s"}</span>
-                                      <span className="num">{formatCurrencyINR(couples * couplePrice)}</span>
-                                    </div>
-                                  )}
-                                  {stagMale > 0 && (
-                                    <div className="flex justify-between">
-                                      <span>{stagMale} {stagMale === 1 ? "single man" : "single men"}</span>
-                                      <span className="num">{formatCurrencyINR(stagMale * malePrice)}</span>
-                                    </div>
-                                  )}
-                                  {stagFemale > 0 && (
-                                    <div className="flex justify-between">
-                                      <span>{stagFemale} single {stagFemale === 1 ? "woman" : "women"}</span>
-                                      <span className="num">{formatCurrencyINR(groupFemaleTotal)}</span>
-                                    </div>
-                                  )}
+                                  {couples > 0 && <div className="flex justify-between"><span>{couples} couple{couples === 1 ? "" : "s"}</span><span className="num">{formatCurrencyINR(couples * couplePrice)}</span></div>}
+                                  {stagMale > 0 && <div className="flex justify-between"><span>{stagMale} {stagMale === 1 ? "single man" : "single men"}</span><span className="num">{formatCurrencyINR(stagMale * malePrice)}</span></div>}
+                                  {stagFemale > 0 && <div className="flex justify-between"><span>{stagFemale} single {stagFemale === 1 ? "woman" : "women"}</span><span className="num">{formatCurrencyINR(groupFemaleTotal)}</span></div>}
                                   <div className="flex justify-between font-bold text-[var(--color-ink)] pt-1.5 border-t border-[var(--color-hairline)]/40">
-                                    <span>
-                                      {groupGuestCount} guest
-                                      {groupGuestCount === 1 ? "" : "s"}
-                                    </span>
-                                    <span className="num">
-                                      {formatCurrencyINR(groupTotal)}
-                                    </span>
+                                    <span>{groupGuestCount} guest{groupGuestCount === 1 ? "" : "s"}</span>
+                                    <span className="num">{formatCurrencyINR(groupTotal)}</span>
                                   </div>
                                 </div>
+                              </div>
+                            </div>
+
+                            {/* TABLE Options */}
+                            <div
+                              className={`w-1/2 shrink-0 pl-0.5 transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                                selectedTierType === "TABLE"
+                                  ? "max-h-[500px] opacity-100"
+                                  : "max-h-0 opacity-0 overflow-hidden pointer-events-none"
+                              }`}
+                            >
+                              <div className="p-4 rounded-xl bg-[var(--color-canvas)]/70 border border-[var(--color-hairline)]/60 space-y-4 text-xs">
+                                <div className="space-y-2">
+                                  <span className="font-bold text-[var(--color-muted)] uppercase tracking-wider text-[10px] block">Table Capacity</span>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {([5, 8, 10, 15] as const).map((size) => (
+                                      <button key={size} type="button" onClick={() => setTableSize(size)} disabled={!((["A","B","C"] as const).some((c) => tableAvailable(size, c) > 0))} className={`py-2 rounded-lg border text-center font-bold text-xs transition-[background-color,border-color,transform] active:scale-[0.97] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${tableSize === size ? "bg-[var(--color-brand)] text-[var(--color-brand-text)] border-[var(--color-brand)]" : "bg-[var(--color-surface)] border-[var(--color-hairline)] text-[var(--color-ink)] hover:border-[var(--color-brand)]/50"}`}>
+                                        {size} Guests
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <span className="font-bold text-[var(--color-muted)] uppercase tracking-wider text-[10px] block">Zone Pricing (Table of {tableSize})</span>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {(["A", "B", "C"] as const).map((cat) => {
+                                      const tier = groupTier(tableSize, cat);
+                                      return (
+                                        <button key={cat} type="button" onClick={() => setTableCategory(cat)} disabled={tableAvailable(tableSize, cat) <= 0} className={`p-2.5 rounded-lg border text-left transition-[background-color,border-color,transform] active:scale-[0.97] cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${tableCategory === cat ? "bg-[var(--color-brand)] text-[var(--color-brand-text)] border-[var(--color-brand)]" : "bg-[var(--color-surface)] border-[var(--color-hairline)] text-[var(--color-ink)] hover:border-[var(--color-brand)]/50"}`}>
+                                          <div className={`text-[10px] font-semibold uppercase ${tableCategory === cat ? "text-[var(--color-brand-text)]/80" : "text-[var(--color-muted)]"}`}>Zone {cat}</div>
+                                          <div className="font-bold text-xs num mt-0.5">{tier ? formatCurrencyINR(payableTierPrice(tier)) : "—"}</div>
+                                          <div className={`text-[9px] font-semibold mt-0.5 ${tableCategory === cat ? "text-[var(--color-brand-text)]/80" : tableAvailable(tableSize, cat) <= 0 ? "text-[var(--color-danger)]" : "text-[var(--color-muted)]"}`}>{tableAvailability(tableSize, cat)}</div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                {(!groupTier(tableSize, tableCategory) || tableAvailable(tableSize, tableCategory) <= 0) && (
+                                  <p className="text-[11px] font-semibold text-[var(--color-danger)]">{tableAvailable(tableSize, tableCategory) <= 0 ? `Sold out for ${tableSize} guests in zone ${tableCategory}. Pick another size or zone.` : `No tables for ${tableSize} guests in zone ${tableCategory}. Try another size or zone.`}</p>
+                                )}
+                                <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-hairline)]/40 text-[11px] text-[var(--color-muted)]"><Wallet className="w-3.5 h-3.5 text-[var(--color-brand)] shrink-0" /><span>The full table amount becomes bar credit.</span></div>
+                                <button type="button" onClick={() => setLayoutOpen(true)} className="min-h-[44px] w-full py-2.5 rounded-lg border border-[var(--color-brand)]/40 text-[var(--color-brand)] text-sm font-semibold hover:bg-[var(--color-brand)]/10 active:scale-[0.98] transition-[background-color,transform] duration-150 cursor-pointer">Show layout</button>
                               </div>
                             </div>
                           </div>

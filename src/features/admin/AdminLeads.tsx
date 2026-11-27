@@ -1,25 +1,17 @@
 import { useCheckoutLeads } from "@/api/hooks/useLeads";
 import { Card } from "@/components/ui/Card";
-import { formatDateTime, formatLabel, pluralize } from "@/lib/utils";
-import { Inbox, RefreshCw, Search, Users, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { formatLabel, pluralize } from "@/lib/utils";
+import { ChevronDown, Inbox, RefreshCw, Search, Users, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 
-const statusTone: Record<string, string> = {
-  ATTEMPTED:
-    "bg-[var(--color-brand)]/10 text-[var(--color-brand)] border-[var(--color-brand)]/25",
-  PENDING:
-    "bg-[var(--color-brand)]/15 text-[var(--color-brand)] border-[var(--color-brand)]/35",
-  UTR_SUBMITTED:
-    "bg-[var(--color-ink)]/10 text-[var(--color-ink)] border-[var(--color-ink)]/25",
-  CONFIRMED:
-    "bg-[var(--color-success-bg)] text-[var(--color-success)] border-[var(--color-success)]/35",
-  FAILED:
-    "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[var(--color-danger)]/35",
-  DUPLICATE:
-    "bg-[var(--color-canvas)] text-[var(--color-muted)] border-[var(--color-hairline)]",
-  INVALID:
-    "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[var(--color-danger)]/35",
-};
+function formatLeadDate(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: "—", time: "" };
+  return {
+    date: d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+    time: d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }),
+  };
+}
 
 export const AdminLeads: React.FC = () => {
   const [query, setQuery] = useState("");
@@ -32,13 +24,16 @@ export const AdminLeads: React.FC = () => {
   }, [query]);
 
   const {
-    data: leads,
+    data,
     isLoading,
     refetch,
     isFetching,
-  } = useCheckoutLeads({ q: search, includeCompleted, limit: 100 });
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCheckoutLeads({ q: search, includeCompleted, limit: 10 });
 
-  const leadList = leads || [];
+  const leadList = useMemo(() => (data?.pages || []).flatMap((p) => p.leads), [data]);
 
   return (
     <div className="space-y-5 text-left animate-fade-in">
@@ -52,8 +47,8 @@ export const AdminLeads: React.FC = () => {
             <h2 className="text-lg font-semibold text-[var(--color-ink)] tracking-tight">
               Checkout Leads
             </h2>
-            <span className="px-2 py-0.5 rounded-md bg-[var(--color-canvas)] border border-[var(--color-hairline)]/70 text-[var(--color-muted)] text-xs font-medium tabular-nums">
-              {leadList.length}
+              <span className="px-2 py-0.5 rounded-md bg-[var(--color-canvas)] border border-[var(--color-hairline)]/70 text-[var(--color-muted)] text-xs font-medium tabular-nums">
+              {leadList.length}{hasNextPage ? "+" : ""}
             </span>
           </div>
           <p className="text-sm text-[var(--color-muted)] mt-1">
@@ -151,12 +146,11 @@ export const AdminLeads: React.FC = () => {
           <table className="w-full min-w-[820px] text-left text-xs">
             <thead className="bg-[var(--color-canvas)] border-b border-[var(--color-hairline)] text-[11px] uppercase tracking-wider text-[var(--color-muted)]">
               <tr>
-                <th className="px-4 py-3.5 font-semibold w-[22%]">Customer</th>
-                <th className="px-4 py-3.5 font-semibold w-[22%]">Interest</th>
-                <th className="px-4 py-3.5 font-semibold w-[14%]">Group</th>
-                <th className="px-4 py-3.5 font-semibold w-[16%]">Payment</th>
-                <th className="px-4 py-3.5 font-semibold w-[14%]">Status</th>
-                <th className="px-4 py-3.5 font-semibold text-right w-[12%]">Updated</th>
+                <th className="px-4 py-3.5 font-semibold w-[24%]">Customer</th>
+                <th className="px-4 py-3.5 font-semibold w-[24%]">Interest</th>
+                <th className="px-4 py-3.5 font-semibold w-[18%]">Group</th>
+                <th className="px-4 py-3.5 font-semibold w-[20%]">Payment</th>
+                <th className="px-4 py-3.5 font-semibold text-right w-[14%]">Updated</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-hairline)]/70 bg-[var(--color-surface)]">
@@ -187,7 +181,7 @@ export const AdminLeads: React.FC = () => {
                 ))
               ) : leadList.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center">
+                  <td colSpan={5} className="px-6 py-14 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <div className="w-11 h-11 rounded-xl bg-[var(--color-canvas)] border border-[var(--color-hairline)]/70 flex items-center justify-center text-[var(--color-muted)] mb-3">
                         <Inbox className="w-5 h-5" />
@@ -204,109 +198,65 @@ export const AdminLeads: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                leadList.map((lead) => (
-                  <tr
-                    key={lead.id}
-                    className="hover:bg-[var(--color-surface-hover)]/60 transition-colors"
-                  >
-                    {/* Customer */}
-                    <td className="px-4 py-3.5 align-top">
-                      <div className="font-bold text-[var(--color-ink)] text-sm leading-snug">
-                        {lead.primary_name || "Guest"}
-                      </div>
-                      <div className="text-[var(--color-muted)] font-mono text-xs mt-0.5 num">
-                        {lead.contact_phone || "—"}
-                      </div>
-                      {lead.whatsapp_number && lead.whatsapp_number !== lead.contact_phone && (
-                        <div className="text-[11px] text-[var(--color-muted)] font-mono mt-0.5 num">
-                          WA: {lead.whatsapp_number}
+                leadList.map((lead) => {
+                  const dt = formatLeadDate(lead.updated_at);
+                  const groupParts = [
+                    lead.couple_count > 0 ? `${lead.couple_count} couple${lead.couple_count === 1 ? "" : "s"}` : "",
+                    lead.stag_male_count > 0 ? `${lead.stag_male_count} male` : "",
+                    lead.stag_female_count > 0 ? `${lead.stag_female_count} female` : "",
+                  ].filter(Boolean);
+                  return (
+                    <tr key={lead.id} className="hover:bg-[var(--color-surface-hover)]/60 transition-colors">
+                      <td className="px-4 py-3.5 align-top">
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-[var(--color-ink)] text-sm leading-snug">{lead.primary_name || "Guest"}</div>
+                          <div className="text-[var(--color-muted)] font-mono text-xs num">{lead.contact_phone || "—"}</div>
+                          <div className="text-[11px] text-[var(--color-muted)]">
+                            {[lead.primary_age ? `Age ${lead.primary_age}` : "", lead.gender ? formatLabel(lead.gender) : ""].filter(Boolean).join(" · ") || "—"}
+                          </div>
                         </div>
-                      )}
-                      {(lead.primary_age || lead.gender) && (
-                        <div className="text-[11px] text-[var(--color-muted)] mt-0.5">
-                          {lead.primary_age ? `Age ${lead.primary_age}` : ""}
-                          {lead.primary_age && lead.gender ? " · " : ""}
-                          {lead.gender ? formatLabel(lead.gender) : ""}
+                      </td>
+                      <td className="px-4 py-3.5 align-top">
+                        <div className="space-y-0.5">
+                          <div className="text-xs font-medium text-[var(--color-ink)] line-clamp-1">{lead.event_title || "—"}</div>
+                          <div className="text-[11px] text-[var(--color-muted)] line-clamp-1">{lead.category_name ? formatLabel(lead.category_name) : "—"}</div>
+                          {lead.seat_section && (
+                            <div className="text-[11px] text-[var(--color-brand)] font-semibold">Section {lead.seat_section}{lead.seat_table_size ? ` · ${lead.seat_table_size}-seater` : ""}</div>
+                          )}
                         </div>
-                      )}
-                    </td>
-
-                    {/* Interest */}
-                    <td className="px-4 py-3.5 align-top">
-                      <div className="font-semibold text-[var(--color-ink)]">
-                        {lead.category_name || "—"}
-                      </div>
-                      <div className="text-[11px] text-[var(--color-muted)] mt-0.5 line-clamp-1">
-                        {lead.event_title || "—"}
-                      </div>
-                      {lead.seat_section && (
-                        <div className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded bg-[var(--color-canvas)] border border-[var(--color-hairline)] text-[10px] font-semibold text-[var(--color-brand)]">
-                          Section {lead.seat_section}
-                          {lead.seat_table_size ? ` · ${lead.seat_table_size}-seater` : ""}
+                      </td>
+                      <td className="px-4 py-3.5 align-top">
+                        <div className="space-y-0.5">
+                          {lead.guest_count > 0 ? <div className="font-semibold text-[var(--color-ink)] num text-xs">{lead.guest_count} {pluralize(lead.guest_count, "guest")}</div> : <div className="text-[var(--color-muted)]">—</div>}
+                          {groupParts.length > 0 && <div className="text-[11px] text-[var(--color-muted)] num leading-snug">{groupParts.join(" · ")}</div>}
                         </div>
-                      )}
-                    </td>
-
-                    {/* Group */}
-                    <td className="px-4 py-3.5 align-top">
-                      {lead.guest_count > 0 ? (
-                        <div className="font-semibold text-[var(--color-ink)] num">
-                          {lead.guest_count} {pluralize(lead.guest_count, "guest")}
+                      </td>
+                      <td className="px-4 py-3.5 align-top">
+                        <div className="space-y-0.5">
+                          {lead.upi_transaction_id ? <div className="font-mono text-xs font-semibold text-[var(--color-brand)] break-all">{lead.upi_transaction_id}</div> : <div className="text-[var(--color-muted)] text-xs">No UTR</div>}
+                          {lead.booking_id && <div className="text-[11px] text-[var(--color-muted)] font-mono">#{lead.booking_id.slice(0, 8).toUpperCase()}</div>}
+                          {lead.error_message && <div className="text-[11px] text-[var(--color-danger)] leading-snug max-w-[220px]">{lead.error_message}</div>}
                         </div>
-                      ) : (
-                        <div className="text-[var(--color-muted)]">—</div>
-                      )}
-                      {(lead.couple_count || lead.stag_male_count || lead.stag_female_count) ? (
-                        <div className="text-[11px] text-[var(--color-muted)] mt-0.5 num leading-snug">
-                          {lead.couple_count} couple · {lead.stag_male_count} male ·{" "}
-                          {lead.stag_female_count} female
-                        </div>
-                      ) : null}
-                    </td>
-
-                    {/* Payment */}
-                    <td className="px-4 py-3.5 align-top">
-                      {lead.upi_transaction_id ? (
-                        <div className="font-mono text-xs font-semibold text-[var(--color-brand)] break-all">
-                          {lead.upi_transaction_id}
-                        </div>
-                      ) : (
-                        <div className="text-[var(--color-muted)]">No UTR</div>
-                      )}
-                      {lead.booking_id && (
-                        <div className="text-[11px] text-[var(--color-muted)] font-mono mt-0.5">
-                          #{lead.booking_id.slice(0, 8).toUpperCase()}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3.5 align-top">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${
-                          statusTone[lead.status] ||
-                          "bg-[var(--color-canvas)] text-[var(--color-muted)] border-[var(--color-hairline)]"
-                        }`}
-                      >
-                        {formatLabel(lead.status)}
-                      </span>
-                      {lead.error_message && (
-                        <div className="text-[11px] text-[var(--color-danger)] mt-1 max-w-[200px] leading-snug">
-                          {lead.error_message}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Updated */}
-                    <td className="px-4 py-3.5 align-top text-right text-[11px] text-[var(--color-muted)] whitespace-nowrap num">
-                      {formatDateTime(lead.updated_at)}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-4 py-3.5 align-top text-right">
+                        <div className="text-xs font-medium text-[var(--color-ink)] whitespace-nowrap">{dt.date}</div>
+                        <div className="text-[11px] text-[var(--color-muted)] whitespace-nowrap mt-0.5">{dt.time}</div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
+        {hasNextPage && (
+          <div className="border-t border-[var(--color-hairline)]/70 bg-[var(--color-canvas)]/40 px-4 py-3 flex justify-center">
+            <button type="button" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-hairline)] bg-[var(--color-surface)] text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-hover)] disabled:opacity-50 cursor-pointer">
+              <ChevronDown className={`w-4 h-4 ${isFetchingNextPage ? "animate-pulse" : ""}`} />
+              {isFetchingNextPage ? "Loading..." : "Load 10 more"}
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );

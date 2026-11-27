@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import jsQR from "jsqr";
 import { Camera, ScanLine, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
@@ -32,31 +33,40 @@ export const MobileQrScanner: React.FC<MobileQrScannerProps> = ({
 
   const start = useCallback(async () => {
     setError("");
-    const Detector = (window as any).BarcodeDetector;
-    if (!Detector || !navigator.mediaDevices?.getUserMedia) {
+    if (!navigator.mediaDevices?.getUserMedia) {
       setError("Camera scanning isn't available in this browser. Enter the code manually.");
       return;
     }
 
-    const supported: string[] = (await Detector.getSupportedFormats?.()) || [];
-    const usable = formats.filter((format) => supported.includes(format));
-    if (usable.length === 0) {
-      setError("This code format isn't supported on this device. Enter the code manually.");
+    const Detector = (window as any).BarcodeDetector;
+    let usable: string[] = [];
+    if (Detector?.getSupportedFormats) {
+      try {
+        const supported: string[] = await Detector.getSupportedFormats();
+        usable = formats.filter((format) => supported.includes(format));
+      } catch {
+        usable = [];
+      }
+    }
+    const canJsQr = formats.includes("qr_code");
+    if (usable.length === 0 && !canJsQr) {
+      setError("This scanner is not supported on this device. Enter the code manually.");
       return;
     }
 
     try {
       const media = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
+        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       setChosenFormats(usable);
       setStream(media);
       setOpen(true);
-    } catch {
-      setError("Camera access was denied. Manual entry still works.");
+    } catch (e: any) {
+      const name = String(e?.name || "");
+      setError(name === "NotAllowedError" ? "Camera access was denied. Allow camera access and try again." : "Camera unavailable. Manual entry still works.");
     }
-  }, [formats, open]);
+  }, [formats]);
 
   useEffect(() => {
     if (!autoStart || autoStartedRef.current || open) return;
@@ -69,10 +79,14 @@ export const MobileQrScanner: React.FC<MobileQrScannerProps> = ({
     if (!open || !stream || !videoRef.current) return;
 
     const Detector = (window as any).BarcodeDetector;
-    const detector = new Detector({ formats: chosenFormats });
+    const detector = Detector && chosenFormats.length > 0 ? new Detector({ formats: chosenFormats }) : null;
     const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     video.srcObject = stream;
-    void video.play();
+    video.setAttribute("playsinline", "true");
+    video.muted = true;
+    void video.play().catch(() => {});
     activeRef.current = true;
     let frame = 0;
     let busy = false;
@@ -82,21 +96,27 @@ export const MobileQrScanner: React.FC<MobileQrScannerProps> = ({
       if (!busy && video.readyState >= 2) {
         busy = true;
         try {
-          const codes = await detector.detect(video);
-          if (codes.length > 0) {
-            const value = String(codes[0].rawValue || "").trim();
-            if (value) {
-              activeRef.current = false;
-              onScan(value);
-              setOpen(false);
-              return;
+          let value = "";
+          if (detector) {
+            const codes = await detector.detect(video);
+            value = String(codes[0]?.rawValue || "").trim();
+          } else if (ctx) {
+            canvas.width = video.videoWidth || 0;
+            canvas.height = video.videoHeight || 0;
+            if (canvas.width > 0 && canvas.height > 0) {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              value = String(jsQR(img.data, img.width, img.height, { inversionAttempts: "attemptBoth" })?.data || "").trim();
             }
           }
+          if (value) {
+            activeRef.current = false;
+            onScan(value);
+            setOpen(false);
+            return;
+          }
         } catch {
-          activeRef.current = false;
-          setError("Could not read that code. Try again or enter it manually.");
-          setOpen(false);
-          return;
+          // keep scanning; transient camera frame errors are common on mobile
         } finally {
           busy = false;
         }
@@ -108,6 +128,8 @@ export const MobileQrScanner: React.FC<MobileQrScannerProps> = ({
     return () => {
       activeRef.current = false;
       cancelAnimationFrame(frame);
+      video.pause();
+      video.srcObject = null;
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     };
@@ -127,7 +149,7 @@ export const MobileQrScanner: React.FC<MobileQrScannerProps> = ({
       {open && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4">
           <div className="relative w-full max-w-lg aspect-[3/4] rounded-3xl overflow-hidden border border-white/20 bg-black">
-            <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+            <video ref={videoRef} className="w-full h-full object-cover" muted autoPlay playsInline />
             <div className="absolute inset-0 border-2 border-[var(--color-success)]/60 rounded-3xl pointer-events-none m-6" />
             <ScanLine className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/60" />
           </div>

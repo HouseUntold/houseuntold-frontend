@@ -1,5 +1,5 @@
 import React from "react";
-import houseUntoldLogo from "../../assets/images/Logo.png";
+import houseUntoldLogo from "../../assets/images/Logo.jpeg";
 
 interface VenuLogoProps {
   onClick?: () => void;

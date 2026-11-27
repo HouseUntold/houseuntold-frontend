@@ -11,8 +11,14 @@ export const authApi = {
     return AuthResponseSchema.parse(res.data);
   },
   logout: async () => {
-    const res = await api.post("/auth/logout");
-    return res.data;
+    try {
+      const res = await api.post("/auth/logout");
+      return res.data;
+    } finally {
+      try {
+        localStorage.removeItem("venu-auth");
+      } catch {}
+    }
   },
   me: async (): Promise<User> => {
     const res = await api.get("/auth/me");

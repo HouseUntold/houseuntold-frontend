@@ -27,13 +27,17 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
         }),
       setRole: (role) => set({ role }),
-      logout: () =>
+      logout: () => {
+        try {
+          localStorage.removeItem("venu-auth");
+        } catch {}
         set({
           user: null,
           token: null,
           role: "CUSTOMER",
           isAuthenticated: false,
-        }),
+        });
+      },
     }),
     { name: "venu-auth" },
   ),
