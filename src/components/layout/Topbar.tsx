@@ -37,8 +37,8 @@ export const Topbar: React.FC = () => {
         </button>
 
         <Link to="/" className="flex items-center gap-2.5 rounded-lg py-1 -my-1 group focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/25">
-          <div className="w-8 h-8 rounded-full border border-[var(--color-hairline)] flex items-center justify-center font-bold text-xs tracking-tighter text-[var(--color-ink)] bg-[var(--color-surface)]/60 group-hover:border-[var(--color-brand)] transition-colors">
-            <img className="rounded-full" src="/public/assets/images/Logo.jpeg"/>
+          <div className="w-8 h-8 rounded-full border border-[var(--color-hairline)] flex items-center justify-center font-bold text-xs tracking-tighter text-[var(--color-ink)] bg-[var(--color-surface)]/60 group-hover:border-[var(--color-brand)] transition-colors overflow-hidden">
+            <img className="w-full h-full object-cover" src="/assets/images/Logo.jpeg" alt="House Untold" />
           </div>
           <span className="font-bold text-lg text-[var(--color-ink)] tracking-tight group-hover:text-[var(--color-ink)]/90 transition-colors">
             Housen Untold

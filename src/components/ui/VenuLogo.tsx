@@ -1,5 +1,4 @@
 import React from "react";
-import houseUntoldLogo from "../../assets/images/Logo.jpeg";
 
 interface VenuLogoProps {
   onClick?: () => void;
@@ -14,7 +13,7 @@ export const VenuLogo: React.FC<VenuLogoProps> = ({ onClick }) => {
       aria-label="House Untold Home"
     >
       <img
-        src={houseUntoldLogo}
+        src="/assets/images/Logo.jpeg"
         alt=""
         aria-hidden="true"
         className="w-11 h-11 sm:w-12 sm:h-12 object-contain shrink-0 brightness-125 contrast-110"
